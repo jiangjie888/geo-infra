@@ -1,0 +1,7 @@
+刚才吹嘘dependency:tree时，我用到了“无处遁形”，其实有时你会发现简单地用dependency:tree往往并不能查看到所有的传递依赖。不过如果你真的想要看所有的，必须得加一个-Dverbose参数，这时就必定是最全的了。
+全是全了，但显示出来的东西太多，头晕目眩，有没有好法呢？当然有了，加上Dincludes或者Dexcludes说出你喜欢或讨厌，dependency:tree就会帮你过滤出来：
+引用
+Dincludes=org.springframework:spring-tx
+过滤串使用groupId:artifactId:version的方式进行过滤，可以不写全啦，如：
+
+mvn dependency:tree -Dverbose -Dincludes=asm:asm  

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       		http://www.springframework.org/schema/beans/spring-beans.xsd 
+       		http://www.springframework.org/schema/context 
+       		http://www.springframework.org/schema/context/spring-context.xsd
+       		http://www.springframework.org/schema/aop 
+       		http://www.springframework.org/schema/aop/spring-aop.xsd
+       		http://www.springframework.org/schema/mvc
+       		http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       		http://www.springframework.org/schema/util
+			http://www.springframework.org/schema/util/spring-util-2.0.xsd"
+	default-autowire="byName">
+
+	<!-- redis -->
+	 <bean id="jedisPoolConfig" class="redis.clients.jedis.JedisPoolConfig">  
+        <property name="maxTotal" value="2048" />  
+        <property name="maxIdle" value="200" />  
+        <property name="numTestsPerEvictionRun" value="1024" />  
+        <property name="timeBetweenEvictionRunsMillis" value="30000" />  
+        <property name="minEvictableIdleTimeMillis" value="-1" />  
+        <property name="softMinEvictableIdleTimeMillis" value="10000" />  
+        <property name="maxWaitMillis" value="1500" />  
+        <property name="testOnBorrow" value="true" />  
+        <property name="testWhileIdle" value="true" />  
+        <property name="testOnReturn" value="false" />  
+        <property name="jmxEnabled" value="true" />  
+        <property name="jmxNamePrefix" value="youyuan" />  
+        <property name="blockWhenExhausted" value="false" />  
+    </bean>  
+    
+    <!-- 集群主备 -->
+     <!-- <bean id="shardedJedisPool" class="redis.clients.jedis.ShardedJedisPool">  
+        <constructor-arg index="0" ref="jedisPoolConfig" />  
+        <constructor-arg index="1">  
+            <list>  
+            	<bean name="master" class="redis.clients.jedis.JedisShardInfo">   
+                    <constructor-arg index="0" value="192.168.100.72" />   
+                    <constructor-arg  index="1" value="6379" type="int" />   
+                </bean>   
+                <bean name="slaver" class="redis.clients.jedis.JedisShardInfo">  
+                	<constructor-arg value="redis://10.112.88.108:6379/15"/>
+                    <constructor-arg index="0" value="192.168.100.72" />  
+                    <constructor-arg index="1" value="6379" type="int" />  
+                </bean>
+            </list>  
+        </constructor-arg>  
+    </bean>   -->
+      
+
+	<!-- 单实例 -->
+	 <bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
+	    <property name="hostName" value="192.168.100.72" />
+	    <property name="port" value="6379" />
+	    <property name="password" value="" />
+	    <property name="timeout" value="10000" />
+	    <property name="poolConfig" ref="jedisPoolConfig" />
+	    <property name="usePool" value="true" />
+	</bean> 
+	 
+	<bean id="redisTemplate" class="org.springframework.data.redis.core.StringRedisTemplate">
+	    <property name="connectionFactory" ref="jedisConnectionFactory" />
+	</bean> 
+	 
+	<!-- 将session放入redis -->
+	<bean id="redisHttpSessionConfiguration" class="org.springframework.session.data.redis.config.annotation.web.http.RedisHttpSessionConfiguration">   
+	        <!-- 过期时间100分钟 -->  
+	        <property name="maxInactiveIntervalInSeconds" value="6000"></property>  
+	</bean> 
+	
+</beans>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       	http://www.springframework.org/schema/beans/spring-beans.xsd 
+       	http://code.alibabatech.com/schema/dubbo 
+       	http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+	<!-- 消费方应用名，用于计算依赖关系，不是匹配条件，不要与提供方一样 -->
+    <dubbo:application name="${dubbo.application.name}" owner="${dubbo.application.owner}" />
+    
+    <!-- 使用multicast广播注册中心暴露服务地址 -->  
+    <!--<dubbo:registry address="multicast://224.5.6.7:1234" /> -->  
+    
+    <!-- zk注册中心配置 -->
+    <dubbo:registry address="${dubbo.registry.address}" group="${dubbo.registry.groupname}"/> <!-- lejr-dubbo -->
+    <!-- 用dubbo端口自动分配 -->
+    <dubbo:protocol name="${dubbo.protocol.name}" port="${dubbo.protocol.port}" threads="${dubbo.protocol.threads}" serialization="${dubbo.protocol.serialization}" />  
+
+   	<!-- dubbo提供者配置 -->
+	<dubbo:provider group="${dubbo.provider.groupname}" timeout="${dubbo.provider.timeout}" retries="${dubbo.provider.retries}" owner="${dubbo.provider.owner}" />
+    
+ 	<!-- 要暴露的服务接口 -->  
+  	<dubbo:service interface="com.geo.infra.service.IUserService" ref="userServiceImpl" />  
+        
+        
+</beans>

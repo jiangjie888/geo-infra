@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       		http://www.springframework.org/schema/beans/spring-beans.xsd 
+       		http://www.springframework.org/schema/context 
+       		http://www.springframework.org/schema/context/spring-context.xsd
+       		http://www.springframework.org/schema/aop 
+       		http://www.springframework.org/schema/aop/spring-aop.xsd
+       		http://www.springframework.org/schema/mvc
+       		http://www.springframework.org/schema/mvc/spring-mvc.xsd
+       		http://code.alibabatech.com/schema/dubbo 
+       	http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+       		
+	<!-- 启动对@AspectJ（面向切面）注解的支持 通知spring使用cglib而不是jdk的来生成代理方法 AOP可以拦截到Controller-->  
+    <aop:aspectj-autoproxy proxy-target-class="true" /> 
+	
+	<!-- 配置根视图 -->
+    <!-- <mvc:view-controller path="/" view-name="index"/> -->
+
+	 <!-- 激活基于注解的配置 @RequestMapping, @ExceptionHandler,数据绑定 ,@NumberFormat ,
+	      @DateTimeFormat ,@Controller ,@Valid ,@RequestBody ,@ResponseBody等 
+	      
+			QuoteFieldNames———-输出key时是否使用双引号,默认为true 
+			WriteMapNullValue——–是否输出值为null的字段,默认为false 
+			WriteNullNumberAsZero—-数值字段如果为null,输出为0,而非null 
+			WriteNullListAsEmpty—–List字段如果为null,输出为[],而非null 
+			WriteNullStringAsEmpty—字符类型字段如果为null,输出为”“,而非null 
+			WriteNullBooleanAsFalse–Boolean字段如果为null,输出为false,而非null
+	 -->
+	<!-- <dubbo:annotation package="com.geo.infra.controller" /> -->
+	<mvc:annotation-driven>
+		<mvc:argument-resolvers>  
+	        <bean class="com.geo.mvc.support.filter.FastJsonArgumentResolver"/>  
+	    </mvc:argument-resolvers>
+		<mvc:message-converters register-defaults="true">
+			<bean class="org.springframework.http.converter.StringHttpMessageConverter">
+				<constructor-arg value="UTF-8" />
+			</bean>
+			
+			<bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">  
+                <property name="supportedMediaTypes">
+                    <list>
+                        <value>text/html;charset=UTF-8</value>
+                        <value>application/json</value>
+                    </list>
+                </property>
+                <property name="features">
+                    <list>
+                       <!-- 跳过声明Transient的字段 --> 
+                       <value>SkipTransientField</value>  
+	                   <!-- 输出key时是否使用双引号 -->  
+		               <value>QuoteFieldNames</value>  
+		               <!-- 是否输出值为null的字段 -->  
+		               <value>WriteMapNullValue</value>
+		               <!-- 数值字段如果为null,输出为0,而非null -->  
+		               <!-- <value>WriteNullNumberAsZero</value>  --> 
+		               <!-- List字段如果为null,输出为[],而非null -->  
+		               <!-- <value>WriteNullListAsEmpty</value>  --> 
+		               <!-- 字符类型字段如果为null,输出为"",而非null -->  
+		               <!-- <value>WriteNullStringAsEmpty</value>   -->
+		               <!-- Boolean字段如果为null,输出为false,而非null -->  
+		               <!-- <value>WriteNullBooleanAsFalse</value>   -->
+		               <!-- null String不输出  -->  
+		               <!-- <value>WriteNullStringAsEmpty</value> -->  
+		               <!-- null String也要输出  -->  
+		               <!-- <value>WriteMapNullValue</value> -->  
+		                 
+		               <!-- Date的日期转换器 -->  
+		               <value>WriteDateUseDateFormat</value>  
+               
+
+                    </list>
+                </property>
+            </bean>  
+		</mvc:message-converters>
+	</mvc:annotation-driven>
+	
+	
+    <mvc:interceptors>  
+    	<!-- 使用bean定义一个Interceptor，直接定义在mvc:interceptors根下面的Interceptor将拦截所有的请求 -->  
+    	<bean class="com.geo.mvc.support.filter.AuthInterceptor"/>  
+	    <!-- 
+	     <mvc:interceptor> 
+			 <mvc:mapping path="/**/*"/>
+	         <mvc:exclude-mapping path="/**/fonts/*"/>
+	         <mvc:exclude-mapping path="/**/*.css"/>
+	         <mvc:exclude-mapping path="/**/*.js"/>
+	         <mvc:exclude-mapping path="/**/*.png"/>
+	         <mvc:exclude-mapping path="/**/*.gif"/>
+	         <mvc:exclude-mapping path="/**/*.jpg"/>
+	         <mvc:exclude-mapping path="/**/*.jpeg"/>
+	         <mvc:exclude-mapping path="/**/*login*"/>
+	         <mvc:exclude-mapping path="/**/*Login*"/>
+
+	        <mvc:mapping path="/test/number.do"/>  
+	        定义在mvc:interceptor下面的表示是对特定的请求才进行拦截的  
+	        <bean class="com.host.app.web.interceptor.LoginInterceptor"/>  
+	    </mvc:interceptor> -->  
+	</mvc:interceptors>  
+	
+	<!-- 扫描注解 -->
+	<!-- <context:component-scan base-package="com.geo.framework" />
+	<context:component-scan base-package="com.geo.infra" /> -->
+	<context:component-scan base-package="com.geo" use-default-filters="false">
+		<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	</context:component-scan>
+	
+	
+	<!-- 当在web.xml 中   DispatcherServlet使用 <url-pattern>/</url-pattern> 映射时，能映射静态资源 -->
+    <mvc:default-servlet-handler/>
+    
+     <!-- 静态资源映射(配置之后，可以访问到static文件夹下的内容),还需要在拦截器配置 -->
+     <!-- <mvc:resources location="/" mapping="/**/*.js"/>  
+	 <mvc:resources location="/" mapping="/**/*.css"/>  
+	 <mvc:resources location="/assets/" mapping="/assets/**/*"/>  
+	 <mvc:resources location="/images/" mapping="/images/*" cache-period="360000"/> -->
+
+    
+	<!-- 视图层配置 -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+         <property name="prefix" value="/WEB-INF/view/"/>
+         <property name="suffix" value=".jsp"/>
+    </bean>
+	
+
+	<!-- <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="systemPropertiesModeName" value="SYSTEM_PROPERTIES_MODE_OVERRIDE" />
+		<property name="ignoreResourceNotFound" value="true" />
+		<property name="locations">
+			<list>
+				<value>classpath:conf/config_dev.properties</value>
+			</list>
+		</property>
+	</bean> -->
+	
+	
+    <!-- 文件上传 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<property name="defaultEncoding">
+			<value>UTF-8</value>
+		</property>
+		<property name="maxUploadSize">
+			<value>32505856</value><!-- 上传文件大小限制为31M，31*1024*1024 -->
+		</property>
+		<property name="maxInMemorySize">
+			<value>4096</value>
+		</property>
+	</bean>
+	
+</beans>

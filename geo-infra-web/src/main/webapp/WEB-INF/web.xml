@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="WebApp_ID" version="2.5">
+	
+  	<display-name>springmvc</display-name>
+	<!-- spring profile配置 -->
+	<!--<context-param>
+		<param-name>spring.profiles.active</param-name>
+		<param-value>test</param-value>
+	</context-param>
+	
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:spring-config.xml</param-value>
+    </context-param>
+	-->
+
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:**/spring-config*.xml</param-value>
+	</context-param>
+	
+	<!-- log4j2-begin for servlet -->
+    <context-param>
+        <param-name>log4jConfigLocation</param-name>
+        <param-value>classpath:**/log4j2.xml</param-value>
+    </context-param>
+    <listener>
+	    <listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>
+	</listener>
+
+    <!-- 可以使用RequestContextHolder.currentRequestAttributes() 获取到请求的attr -->  
+    <listener>  
+        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>  
+    </listener>  
+    
+	<listener>
+		<description>spring监听器</description>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	
+	<!-- 防止spring内存溢出监听器 -->
+	<listener>
+		<listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+	</listener>
+	
+	<!-- spring mvc servlet -->
+	<servlet>
+		<servlet-name>springmvc</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+		  <param-name>contextConfigLocation</param-name>
+		  <param-value>classpath:**/spring-mvc.xml</param-value>
+		</init-param>
+        <load-on-startup>1</load-on-startup>
+	</servlet>
+	<servlet-mapping>    
+     	 <servlet-name>default</servlet-name>    
+	     <url-pattern>*.js</url-pattern>    
+	     <url-pattern>*.css</url-pattern>    
+	     <url-pattern>/assets/*"</url-pattern>    
+	     <url-pattern>/static/images/*</url-pattern>  
+	     <url-pattern>/static/*</url-pattern>   
+ 	</servlet-mapping>
+ 	
+	<servlet-mapping>
+		<servlet-name>springmvc</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+	<!-- delegatingFilterProxy -->
+	<filter>
+	    <filter-name>springSessionRepositoryFilter</filter-name>
+	    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+	</filter>
+	<filter-mapping>
+	    <filter-name>springSessionRepositoryFilter</filter-name>
+	    <url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<filter>
+		<description>字符集过滤器</description>
+		<filter-name>encodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<description>字符集编码</description>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>encodingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	<!-- 配置Hibernate filter；配置spring管理OpenSessionInViewFilter，来将一个session与一次完整的请求过程对应的线程相绑定。
+		在Java Web项目中使用Hibernate经常会遇到LazyInitializationException。
+		这是因为controller和model层（java代码）将通过JPA的一些启用了延迟加载功能的领域（如用getRefrence()方法或者在关联关系中采用fetch=FetchType.LAZY）
+		返回给view层（jsp代码）的时候，由于加载领域对象的JPA Session已经关闭，导致这些延迟加载的数据访问异常 -->
+		<!-- <filter>  
+		    <filter-name>hibernateFilter</filter-name>  
+		    <filter-class>org.springframework.orm.hibernate4.support.OpenSessionInViewFilter</filter-class>  
+		    <init-param>  
+		        <param-name>sessionFactoryBeanName</param-name>  
+		        <param-value>sessionFactory</param-value>这个sessionFactory是Spring配置文件中配置的bean  
+		    </init-param>  
+		</filter>  
+		<filter-mapping>  
+		    <filter-name>hibernateFilter</filter-name>  
+		    <url-pattern>/*</url-pattern>  
+		</filter-mapping>  --> 
+	<filter>    
+       <filter-name>openEntityManagerInViewFilter</filter-name>    
+       <filter-class>org.springframework.orm.jpa.support.OpenEntityManagerInViewFilter</filter-class>    
+       <init-param>  
+        <param-name>entityManagerFactoryBeanName</param-name>  
+        <param-value>entityManagerFactory</param-value><!-- 这个entityManagerFactory是Spring配置文件中配置的bean -->  
+    </init-param>  
+   </filter>    
+   <filter-mapping>    
+       <filter-name>openEntityManagerInViewFilter</filter-name>    
+       <url-pattern>/*</url-pattern>    
+   </filter-mapping>  
+
+
+   <!-- 配置session超时时间 -->
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+    
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+
+  
+</web-app>

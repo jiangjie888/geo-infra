@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context" 
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"  
+	xmlns:jee="http://www.springframework.org/schema/jee" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:jpa="http://www.springframework.org/schema/data/jpa" 
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-3.2.xsd
+		http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-3.2.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+		http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa-1.2.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-3.0.xsd"
+	default-lazy-init="true">
+
+    <!--可以将数据库连接池的配置文件单独放在另一个properties中-->
+	<context:property-placeholder location="classpath:conf/config_dev.properties"/>
+	
+	<context:annotation-config />
+	
+    <!-- 扫描Repository注解 -->
+    <context:component-scan base-package="com.geo.infra.dao" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
+
+  	<!-- 扫描Service注解 -->
+    <context:component-scan base-package="com.geo.infra.service" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+    </context:component-scan>
+
+  	<!-- 扫描Component注解 -->
+    <context:component-scan base-package="com.geo" use-default-filters="false">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Component"/>
+    </context:component-scan>
+    
+	<!-- druid 打印SQL -->
+	<bean id="log-filter" class="com.alibaba.druid.filter.logging.Slf4jLogFilter">
+        <property name="connectionLogEnabled" value="false"/>
+        <property name="statementLogEnabled" value="false"/>
+        <property name="resultSetLogEnabled" value="true"/>
+        <property name="statementExecutableSqlLogEnable" value="true"/>
+    </bean>
+    
+	<!-- 数据源配置 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="driverClassName" value="${master.jdbc0.driverClassName}" /> 
+	    <property name="url" value="${master.jdbc0.jdbcUrl}" />
+		<property name="username" value="${master.jdbc0.username}" />
+		<property name="password" value="${master.jdbc0.password}" />
+		
+		<!-- 初始化连接个数 -->
+		<property name="initialSize" value="${jdbc.datasource.initialSize}" />
+		<!-- 最大连接个数 -->
+		<property name="maxActive" value="${jdbc.datasource.maxActive}" />
+		<!-- 最小连接个数 -->
+		<property name="minIdle" value="${jdbc.datasource.minIdle}" />
+		<!-- 获取连接时最大等待时间，单位毫秒 -->
+		<property name="maxWait" value="${jdbc.datasource.maxWait}" />
+	    <!-- 开启Druid的监控统计功能 -->
+	    <property name="filters" value="${jdbc.datasource.filters}" />
+	 
+	
+		<!-- 是否缓存preparedStatement，Mysql下建议关闭-->
+		<property name="poolPreparedStatements" value="${jdbc.datasource.poolPreparedStatements}" />
+		<property name="maxOpenPreparedStatements" value="${jdbc.datasource.maxOpenPreparedStatements}" />
+		<!-- 检测是否有效的sql，如果validationQuery为null，testOnBorrow、testOnReturn、testWhileIdle都不会其作用 -->
+		<property name="validationQuery" value="SELECT 'x' FROM DUAL " />
+		<!-- 申请连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能 -->
+		<property name="testOnBorrow" value="${jdbc.datasource.testOnBorrow}" />
+		<!-- 归还连接时执行validationQuery检测连接是否有效，做了这个配置会降低性能 -->
+		<property name="testOnReturn" value="${jdbc.datasource.testOnReturn}" />
+		<!-- 建议配置为true，不影响性能，并且保证安全性。申请连接的时候检测，如果空闲时间大于timeBetweenEvictionRunsMillis，
+			   执行validationQuery检测连接是否有效。 -->
+		<property name="testWhileIdle" value="${jdbc.datasource.testWhileIdle}" />
+		<!-- 单位：毫秒，有两个含义：
+			 1) Destroy线程会检测连接的间隔时间，如果连接空闲时间大于等于minEvictableIdleTimeMillis则关闭物理连接 
+			 2) testWhileIdle的判断依据，详细看testWhileIdle属性的说明 -->
+		<property name="timeBetweenEvictionRunsMillis" value="${jdbc.datasource.timeBetweenEvictionRunsMillis}" />
+		<!-- 连接保持空闲而不被驱逐的最长时间，单位：毫秒 -->
+		<property name="minEvictableIdleTimeMillis" value="${jdbc.datasource.minEvictableIdleTimeMillis}" />
+
+		<!-- 打开removeAbandoned功能 -->
+		<property name="removeAbandoned" value="true" />
+		<!-- 1800秒，也就是30分钟 -->
+		<property name="removeAbandonedTimeout" value="1800" />
+		<!-- 关闭abanded连接时输出错误日志 -->
+		<property name="logAbandoned" value="true" />
+		<property name="proxyFilters">
+            <list>
+                <ref bean="log-filter"/>
+            </list>
+        </property>
+	</bean>
+	
+
+	
+	<!-- 配置SessionFactory -->            
+	<!-- <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		加载hibernate所有的配置文件
+		<property name="mappingDirectoryLocations">
+			<list>
+				<value>classpath:cn/com/geostar/main/model</value>
+			</list>
+		</property>
+	    <property name="packagesToScan">
+			 <list>
+			 	<value>com.geo.infra.domain</value>
+			 </list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				
+				开启二级缓存 ehcache
+                <prop key="hibernate.cache.use_second_level_cache">${hibernate.cache.use_second_level_cache}</prop>
+                <prop key="hibernate.cache.use_query_cache">${hibernate.cache.use_query_cache}</prop>
+                <prop key="hibernate.cache.region.factory_class">${hibernate.cache.region.factory_class}</prop>
+                <prop key="hibernate.cache.provider_configuration_file_resource_path">${hibernate.cache.provider_configuration_file_resource_path}</prop>
+           
+			</props>
+		</property>
+	</bean>
+	
+	配置hibernateTemplate  
+	<bean id="hibernateTemplate" class="org.springframework.orm.hibernate5.HibernateTemplate">  
+	    <property name="sessionFactory" ref="sessionFactory"></property>  
+	</bean> 
+	
+	配置事务管理器
+	<bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory"/>
+	</bean> -->
+	
+	
+	<!-- 整合jpa -->    
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">    
+        <property name="dataSource" ref="dataSource"></property>   
+        <property name="packagesToScan" value="com.geo.infra.domain"></property>    
+        <!-- <property name="persistenceUnitName" value="mytest"></property> -->
+        <property name="jpaVendorAdapter">    
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">    
+                <property name="showSql" value="true"></property>    
+            </bean>    
+        </property>    
+        <property name="jpaProperties">    
+            <props>    
+                <!--设置外连接抓取树的最大深度 -->    
+                <!-- <prop key="hibernate.max_fetch_depth">${hibernate.max_fetch_depth}</prop>    
+                <prop key="hibernate.jdbc.fetch_size">${hibernate.jdbc.fetch_size}</prop>    
+                <prop key="hibernate.jdbc.batch_size">${hibernate.jdbc.batch_size}</prop>     -->
+                <!-- 自动建表类型 validate|create|create-drop|update -->    
+                <!-- <prop key="hibernate.hbm2ddl.auto">validate</prop> --> 
+                
+                   
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+				<prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+				<prop key="hibernate.format_sql">${hibernate.format_sql}</prop>
+  
+                <!-- 设置Hibernate的事务隔离级别,MYSQL默认级别是4(在执行refresh时，取不到最新数据)，SQLServer默认级别是2  
+                        READ UNCOMMITED:1  
+                        READ COMMITED:2  
+                        REPEATABLE READ:4  
+                        SERIALIZEABLE:8   
+                -->  
+                <!-- <prop key="hibernate.connection.isolation">${hibernate.connection.isolation}</prop>   -->
+                <!-- 关闭二级缓存 -->    
+                <prop key="hibernate.cache.provider_class">org.hibernate.cache.NoCacheProvider</prop>    
+                <!-- 关闭实体字段映射校验 -->    
+                <prop key="javax.persistence.validation.mode">none</prop>    
+            </props>    
+        </property>    
+    </bean>  
+    
+	<!-- 声明式事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+	
+	<!-- 1.配置事务管理器 -->  
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">    
+        <property name="entityManagerFactory" ref="entityManagerFactory" />   
+        <!-- 多数据源时，指定事务名称 --> 
+        <!-- <qualifier value="mssqlEM"/>     -->
+    </bean> 
+    
+	<!-- 4.配置repositories自动代理功能,在 Spring 配置文件中启用扫描并自动创建代理的功能 -->  
+	<!--<jpa:repositories base-package="com.geo"     
+        entity-manager-factory-ref="entityManagerFactory"    
+        transaction-manager-ref="transactionManager"/>    -->
+	
+	
+	
+	<!-- 注解方式配置事物 -->
+	<!-- <tx:annotation-driven transaction-manager="transactionManager" /> -->
+
+	<!-- 拦截器方式配置事物 -->
+	<!-- PROPAGATION_REQUIRED 如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择。
+	PROPAGATION_SUPPORTS 支持当前事务，如果当前没有事务，就以非事务方式执行。
+	PROPAGATION_MANDATORY 使用当前的事务，如果当前没有事务，就抛出异常。
+	PROPAGATION_REQUIRES_NEW 新建事务，如果当前存在事务，把当前事务挂起。
+	PROPAGATION_NOT_SUPPORTED 以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。
+	PROPAGATION_NEVER 以非事务方式执行，如果当前存在事务，则抛出异常。
+	PROPAGATION_NESTED 如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。 -->
+	<tx:advice id="transactionAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!-- <tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="append*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="modify*" propagation="REQUIRED" />
+			<tx:method name="edit*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+			<tx:method name="remove*" propagation="REQUIRED" />
+			<tx:method name="repair" propagation="REQUIRED" />
+			<tx:method name="delAndRepair" propagation="REQUIRED" />
+
+			<tx:method name="get*" propagation="SUPPORTS" />
+			<tx:method name="find*" propagation="SUPPORTS" />
+			<tx:method name="load*" propagation="SUPPORTS" />
+			<tx:method name="search*" propagation="SUPPORTS" />
+			<tx:method name="datagrid*" propagation="SUPPORTS" /> -->
+
+			<tx:method name="*" propagation="REQUIRED" rollback-for="Exception" />    
+			<!-- <tx:method name="*" propagation="SUPPORTS" /> -->
+		</tx:attributes>
+	</tx:advice>
+	
+	
+	<aop:config>
+		<!-- <aop:pointcut id="transactionPointcut" expression="execution(* sy.service..*Impl.*(..))" /> -->
+		<!-- <aop:pointcut id="transactionPointcut" expression="execution(* *..service..*.*(..))" /> -->
+		<aop:pointcut id="transactionPointcut" expression="execution(* com.geo.infra.service.*.*(..))"/>
+		<aop:advisor pointcut-ref="transactionPointcut" advice-ref="transactionAdvice" />
+	</aop:config>
+	
+	
+	<!-- 配置druid监控spring jdbc -->
+	<bean id="druid-stat-interceptor" class="com.alibaba.druid.support.spring.stat.DruidStatInterceptor"></bean>
+	<bean id="druid-stat-pointcut" class="org.springframework.aop.support.JdkRegexpMethodPointcut" scope="prototype">
+		<property name="patterns">
+			<list>
+				<value>com.geo.infra.service.*</value>
+			</list>
+		</property>
+	</bean>
+	<aop:config>
+		<aop:advisor pointcut-ref="druid-stat-pointcut" advice-ref="druid-stat-interceptor"  />
+	</aop:config>
+
+
+</beans>

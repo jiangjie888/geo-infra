@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
+
+<!--设置log4j2的自身log级别为warn-->
+<configuration status="warn">
+<!-- <configuration status="error">  -->
+<!--  先定义所有的appender --> 
+ <appenders> 
+
+		<!--   这个输出控制台的配置 --> 
+	  <Console name="Console" target="SYSTEM_OUT"> 
+			<!--    控制台只输出level及以上级别的信息（onMatch），其他的直接拒绝（onMismatch） --> 
+		   <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/> 
+			<!--    这个都知道是输出日志的格式  value="[%5p] [%d{yyyy-MM-dd HH:mm:ss SSS}] [%t] (%F:%L) %m%n"--> 
+		   <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n"/> 
+	  </Console> 
+	  
+	  <!--   文件会打印出所有信息，这个log每次运行程序会自动清空，由append属性决定，这个也挺有用的，适合临时测试用 --> 
+	  <!--   append为TRUE表示消息增加到指定文件中，false表示消息覆盖指定的文件内容，默认值是true --> 
+	  <File name="log" fileName="${web:rootDir}/logs/test.log" append="false"> 
+	   		<PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n"/> 
+	  </File> 
+ 
+		<!--   这个会打印出所有的信息，每次大小超过size，则这size大小的日志会自动存入按年份-月份建立的文件夹下面并进行压缩，作为存档 --> 
+		<RollingFile name="RollingFileInfo" fileName="${web:rootDir}/logs/hpaasvc/info.log" filePattern="${web:rootDir}/logs/hpaasvc/$${date:yyyy-MM}/info-%d{yyyy-MM-dd}-%i.log">
+            <Filters>
+                <ThresholdFilter level="INFO"/>
+                <ThresholdFilter level="WARN" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="RollingFileWarn" fileName="${web:rootDir}/logs/hpaasvc/warn.log" filePattern="${web:rootDir}/logs/hpaasvc/$${date:yyyy-MM}/warn-%d{yyyy-MM-dd}-%i.log">
+            <Filters>
+                <ThresholdFilter level="WARN"/>
+                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
+            </Filters>
+            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingFile>
+
+        <RollingFile name="RollingFileError" fileName="${web:rootDir}/logs/hpaasvc/error.log" filePattern="${web:rootDir}/logs/hpaasvc/$${date:yyyy-MM}/error-%d{yyyy-MM-dd}-%i.log">
+            <ThresholdFilter level="ERROR"/>
+            <PatternLayout pattern="[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingFile>
+  
+ </appenders> 
+ 
+
+  <loggers>
+        <!--过滤掉spring和hibernate的一些无用的debug信息-->
+        <logger name="org.springframework" level="INFO"></logger>
+        <logger name="org.hibernate" level="INFO"></logger>
+        <root level="all">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="log"/>
+            <appender-ref ref="RollingFileInfo"/>
+            <appender-ref ref="RollingFileWarn"/>
+            <appender-ref ref="RollingFileError"/>
+        </root>
+        
+        
+        <!-- druid配置 -->
+        <logger name="druid.sql.Statement" level="debug" additivity="false">
+            <appender-ref ref="Console"/>
+        </logger>
+        <logger name="druid.sql.ResultSet" level="debug" additivity="false">
+            <appender-ref ref="Console"/>
+        </logger>
+   </loggers>
+    
+</configuration>
